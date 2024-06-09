@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -24,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileUpload } from "@/components/FileUpload";
 import { useRouter } from "next/navigation";
+import { useModal } from "@/hooks/use-modal-store";
 
 const formSchema = z.object({
   name: z.string().min(1, {
@@ -34,12 +34,11 @@ const formSchema = z.object({
   }),
 });
 
-export const IntialModal = () => {
+export const ServerModal = () => {
+  const {isOpen,type,onClose}=useModal()
+  const isModalOpen=isOpen &&type==='createServer'
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+
   const form = useForm({
     mode: "onSubmit",
     defaultValues: {
@@ -54,21 +53,21 @@ export const IntialModal = () => {
       await axios.post("/api/servers", values);
       form.reset();
       router.refresh();
-      window.location.reload();
+      onClose()
     } catch (error) {
       console.log(error);
     }
   };
-
-  if (!isMounted) {
-    return null;
-  }
+const handleClose=()=>{
+  form.reset()
+  onClose()
+}
   return (
-    <Dialog open>
+    <Dialog open={isModalOpen} onOpenChange={handleClose}>
       <DialogContent className="bg-white text-black p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6 ">
           <DialogTitle className="text-2xl text-center">
-            Customize your server
+            Create your server
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
             Give your server a personality with a name and an image. You can
