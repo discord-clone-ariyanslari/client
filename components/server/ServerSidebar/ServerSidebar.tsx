@@ -169,6 +169,7 @@ export const ServerSidebar = async ({ serverId }: ServerSideProp) => {
                       {!!members?.length && (
           <div className="mb-2 ">
             <ServerSection
+            server={server}
               sectionType={"members"}
               role={role}
               label="Members"
