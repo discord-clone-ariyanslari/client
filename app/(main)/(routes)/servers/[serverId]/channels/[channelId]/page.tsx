@@ -1,3 +1,4 @@
+import { ChatInput } from "@/components/chat";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { currentProfile } from "@/lib/current-profile";
 import prismadb from "@/lib/db";
@@ -37,7 +38,16 @@ const ChannelIdPage = async ({ params }: ChannelIdProps) => {
         serverId={channel.serverId}
         type="channel"
       />
-    
+      <div className="flex-1">Future Messages</div>
+      <ChatInput
+        name={channel.name}
+        apiUrl={"/api/socket/messages"}
+        type="channel"
+        query={{
+          channelId: channel.id,
+          serverId: channel.serverId,
+        }}
+      />
     </div>
   );
 };
