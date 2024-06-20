@@ -4,15 +4,16 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-  generator client {
-    provider = "prisma-client-js"
-  }
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+
 model Profile {
   id       String @id @default(uuid())
   userId   String @unique
@@ -31,8 +32,8 @@ model Profile {
 model Server {
   name       String
   imageUrl   String @db.Text
- id          String   @id @default(uuid())
-  inviteCode  String   @unique
+  id         String @id @default(uuid())
+  inviteCode String @unique
 
   profileId String
   profile   Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -58,8 +59,13 @@ model Member {
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  serverId String
-  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  serverId              String
+  messages              Message[]
+  directMessages        DirectMessage[]
+  conversationsIntiated Conversation[]  @relation("MemberOne")
+  conversationsRecived  Conversation[]  @relation("MemberTwo")
+
+  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -85,9 +91,64 @@ model Channel {
   serverId String
   server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
 
   @@index([serverId])
   @@index([profileId])
+}
+
+model Message {
+  id       String  @id @default(uuid())
+  content  String  @db.Text
+  fileUrl  String? @db.Text
+  memberId String
+  member   Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  deleted   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([channelId])
+  @@index([memberId])
+}
+
+model Conversation {
+  id String @id @default(uuid())
+
+  memberOneId String
+  memberOne   Member @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
+
+  memberTwoId String
+  memberTwo   Member @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+
+  directMessages DirectMessage[]
+
+  @@unique([memberOneId, memberTwoId])
+  @@index([memberOneId])
+  @@index([memberTwoId])
+}
+
+model DirectMessage {
+  id      String  @id @default(uuid())
+  content String  @db.Text
+  fileUrl String? @db.Text
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId])
+  @@index([memberId])
 }
