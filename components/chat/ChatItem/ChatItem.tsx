@@ -13,6 +13,9 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { useModal } from "@/hooks/use-modal-store";
+import { userAgent } from "next/server";
+import { useParams, useRouter } from "next/navigation";
 interface ChatItemProps {
   id: string;
   content: string;
@@ -47,8 +50,16 @@ export const ChatItem = ({
   socketUrl,
   timestamp,
 }: ChatItemProps) => {
+  const router = useRouter();
+  const params = useParams();
   const [isEditing, setIsEditing] = useState(false);
-  const [isDeleted, setIdDeleted] = useState(false);
+  const { onOpen } = useModal();
+  const onMemberClick = () => {
+    if (member.id === currentMember.id) {
+      return;
+    }
+    router.push(`/servers/${params?.serverId}/conversations/${member.id}`);
+  };
   const fileType = fileUrl?.split(".").pop();
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -97,13 +108,13 @@ export const ChatItem = ({
   return (
     <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full ">
       <div className="group flex gap-x-2 items-start w-full">
-        <div className="cursor-pointer hover:drop-shadow-md transition">
+        <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition">
           <UserAvatar src={member.profile.imageUrl} />
         </div>
         <div className="flex flex-col w-full ">
           <div className="flex items-center gap-x-2 ">
             <div className="flex items-center">
-              <p className="font-semibold text-sm hover:underline cursor-pointer">
+              <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
                 {member.profile.name}
               </p>
               <ActionToolTip label={member.role}>
@@ -151,7 +162,7 @@ export const ChatItem = ({
               )}
             >
               {content}
-              {isUpdated && !isDeleted && (
+              {isUpdated && (
                 <span className="text-[10px] mx-2 text-zinc-500 dark:text-zinc-400">
                   (edited)
                 </span>
@@ -205,7 +216,15 @@ export const ChatItem = ({
             </ActionToolTip>
           )}
           <ActionToolTip label="Delete">
-            <Trash className="cursor-pointer ml-auto h-4 w-4 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition" />
+            <Trash
+              onClick={() =>
+                onOpen("deleteMessage", {
+                  apiUrl: `${socketUrl}/${id}`,
+                  query: socketQuery,
+                })
+              }
+              className="cursor-pointer ml-auto h-4 w-4 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
+            />
           </ActionToolTip>
         </div>
       )}
